@@ -46,8 +46,15 @@ function Dashboard() {
     useEffect(() => {
 
         let unsubscribe = db.collection("record")
+                        .where('owner_uid','==',currentUser.uid)
                         .orderBy("timestamp", "desc")
                         .onSnapshot(function (doc){
+
+                            if(doc.docs.length <= 0){
+                                setData('Belum ada Pohon Link');
+                                return ;
+                            }
+
                             setData(doc.docs.map((data,i)=>{
                                 return (
                                     <CardsInDashboard 
@@ -158,6 +165,9 @@ function Dashboard() {
             </div>
 
             <div className="card mt-4 mb-4">
+                <div className="card-header">
+                    <h5 className="mb-0">Buat Pohon Link</h5>
+                </div>
                 <div className="card-body">
                     <form onSubmit={handleMakeRecord}>
                         <div className="form-group">

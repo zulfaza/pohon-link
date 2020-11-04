@@ -71,7 +71,7 @@ function Dashboard() {
                         });
 
         return unsubscribe;
-    }, [])
+    }, [currentUser])
 
     const handleChoosingImage = ()=>{
         SetError({status:false})

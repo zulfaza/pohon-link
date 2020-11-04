@@ -8,7 +8,7 @@ const Login = ()=>{
 
     const emailRef = useRef();
     const passwordRef = useRef();
-    const { login } = useAuth();
+    const { login, signInWithGoogle } = useAuth();
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false); 
     const history = useHistory();
@@ -57,6 +57,17 @@ const Login = ()=>{
             </div>
             <div className="w-10 text-center mt-2">
                 Need an account ? <Link to={RouteName.register}>Sign up</Link>
+                <br/>
+                Or
+                <br/>
+            </div>
+            <div className="google-btn" onClick={signInWithGoogle}>
+                <div className="google-icon-wrapper">
+                    <img className="google-icon" src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="google button"/>
+                </div>
+                <p className="btn-text">
+                    <b>Sign in with google</b>
+                </p>
             </div>
         </div>
     )

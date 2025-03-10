@@ -1,8 +1,9 @@
+import 'server-only';
+
 import {
   collection,
   doc,
   setDoc,
-  getDoc,
   getDocs,
   query,
   where,
@@ -17,7 +18,7 @@ import { db } from './firebase';
 import { Link, UserProfile } from '../types';
 
 // Convert Firestore timestamp to Date
-const convertTimestampToDate = (data: any) => {
+const convertTimestampToDate = (data: Record<string, unknown>) => {
   const result = { ...data };
 
   Object.keys(result).forEach((key) => {

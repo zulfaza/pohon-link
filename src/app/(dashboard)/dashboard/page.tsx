@@ -6,19 +6,36 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { LinkForm } from '@/components/LinkForm';
 import { Link as LinkType, UserProfile } from '@/types';
-import {
-  createLink,
-  getLinksByUserId,
-  updateLink,
-  deleteLink,
-  reorderLinks,
-  getUserProfileByUserId,
-  getUserProfileByCustomUrl,
-  updateUserProfile,
-} from '@/lib/firestore';
+import { userProfileApi, linksApi } from '@/lib/api';
 import { ManageLinksView } from '@/components/dashboard/ManageLinksView';
 import { PreviewLinksView } from '@/components/dashboard/PreviewLinksView';
 import ProfileView from '@/components/dashboard/ProfileView';
+
+// Helper function to parse dates from ISO strings
+const parseDates = (obj: unknown): unknown => {
+  if (!obj) return obj;
+
+  if (
+    typeof obj === 'string' &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(obj)
+  ) {
+    return new Date(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => parseDates(item));
+  }
+
+  if (typeof obj === 'object' && obj !== null) {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = parseDates(value);
+    }
+    return result;
+  }
+
+  return obj;
+};
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
@@ -44,12 +61,13 @@ export default function DashboardPage() {
     setIsLoading(true);
     try {
       const [fetchedLinks, userProfile] = await Promise.all([
-        getLinksByUserId(user.id),
-        getUserProfileByUserId(user.id),
+        linksApi.getByUserId(user.id),
+        userProfileApi.getByUserId(user.id),
       ]);
 
-      setLinks(fetchedLinks);
-      setProfile(userProfile);
+      // Parse dates from ISO strings
+      setLinks(parseDates(fetchedLinks) as LinkType[]);
+      setProfile(parseDates(userProfile) as UserProfile | null);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -62,11 +80,13 @@ export default function DashboardPage() {
 
     setIsSubmitting(true);
     try {
-      await createLink(user.id, data.title, data.url);
-      await fetchData();
+      const newLink = await linksApi.create(user.id, data.title, data.url);
       setIsAddModalOpen(false);
+      // Parse dates from the new link
+      setLinks((prev) => [...prev, parseDates(newLink) as LinkType]);
     } catch (error) {
       console.error('Error adding link:', error);
+      fetchData(); // Fallback to full refresh if there's an error
     } finally {
       setIsSubmitting(false);
     }
@@ -77,11 +97,24 @@ export default function DashboardPage() {
 
     setIsSubmitting(true);
     try {
-      await updateLink(currentLink.id, data);
-      await fetchData();
+      await linksApi.update(currentLink.id, data);
       setIsEditModalOpen(false);
+
+      // Update the link in the state
+      setLinks((prev) =>
+        prev.map((link) =>
+          link.id === currentLink.id
+            ? (parseDates({
+                ...link,
+                ...data,
+                updatedAt: new Date().toISOString(),
+              }) as LinkType)
+            : link
+        )
+      );
     } catch (error) {
       console.error('Error updating link:', error);
+      fetchData(); // Fallback to full refresh if there's an error
     } finally {
       setIsSubmitting(false);
     }
@@ -92,32 +125,16 @@ export default function DashboardPage() {
 
     setIsSubmitting(true);
     try {
-      await deleteLink(currentLink.id);
-      await fetchData();
+      await linksApi.delete(currentLink.id);
       setIsDeleteModalOpen(false);
+
+      // Remove the link from the state
+      setLinks((prev) => prev.filter((link) => link.id !== currentLink.id));
     } catch (error) {
       console.error('Error deleting link:', error);
+      fetchData(); // Fallback to full refresh if there's an error
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleReorderLinks = async (reorderedLinks: LinkType[]) => {
-    const updatedLinks = reorderedLinks.map((link, index) => ({
-      ...link,
-      order: index,
-    }));
-
-    setLinks(updatedLinks);
-
-    try {
-      await reorderLinks(
-        updatedLinks.map((link) => ({ id: link.id, order: link.order }))
-      );
-    } catch (error) {
-      console.error('Error reordering links:', error);
-      // Revert to original order if there's an error
-      await fetchData();
     }
   };
 
@@ -125,32 +142,34 @@ export default function DashboardPage() {
     title: string;
     customUrl: string;
     bio: string | null;
-    theme: 'light' | 'dark';
+    theme: 'light' | 'dark' | 'system';
   }) => {
-    if (!user || !profile) return;
+    if (!profile) return;
 
     setIsProfileFormSubmitting(true);
     try {
-      await updateUserProfile(profile.id, data);
-      await fetchData();
+      await userProfileApi.update(profile.id, data);
+      // Update the profile in the state
+      setProfile(
+        parseDates({
+          ...profile,
+          ...data,
+          updatedAt: new Date().toISOString(),
+        }) as UserProfile
+      );
     } catch (error) {
       console.error('Error updating profile:', error);
+      fetchData(); // Fallback to full refresh if there's an error
     } finally {
       setIsProfileFormSubmitting(false);
     }
   };
 
   const checkCustomUrlAvailability = async (url: string): Promise<boolean> => {
-    if (!user) return false;
+    if (!profile || url === profile.customUrl) return true;
 
-    try {
-      const existingProfile = await getUserProfileByCustomUrl(url);
-      // URL is available if no profile exists with this URL or if it belongs to the current user
-      return !existingProfile || existingProfile.userId === user.id;
-    } catch (error) {
-      console.error('Error checking URL availability:', error);
-      return false;
-    }
+    const existingProfile = await userProfileApi.getByCustomUrl(url);
+    return !existingProfile;
   };
 
   if (!isLoaded) {
@@ -233,8 +252,8 @@ export default function DashboardPage() {
       >
         <div>
           <p className='mb-4'>
-            Are you sure you want to delete "{currentLink?.title}"? This action
-            cannot be undone.
+            Are you sure you want to delete &quot;{currentLink?.title}?&quot;
+            This action cannot be undone.
           </p>
           <div className='flex justify-end space-x-3'>
             <Button

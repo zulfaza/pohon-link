@@ -3,13 +3,9 @@ import {
   SignedOut,
   SignInButton,
   SignOutButton,
-  SignUpButton,
-  UserButton,
 } from '@clerk/nextjs';
-import { TreePine, Globe } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { TreePine } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
 
 export default function Home() {
   return (

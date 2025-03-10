@@ -12,7 +12,7 @@ interface LinkCardProps {
   onEdit: (link: Link) => void;
   onDelete: (linkId: string) => void;
   isDragging?: boolean;
-  dragHandleProps?: any;
+  dragHandleProps?: Record<string, unknown>;
 }
 
 export const LinkCard: React.FC<LinkCardProps> = ({

@@ -20,7 +20,7 @@ export function ManageLinksView({
   onDeleteLink,
 }: ManageLinksViewProps) {
   return (
-    <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6'>
+    <div className='bg-white dark:bg-gray-800 rounded-lg shadow p-6'>
       <div className='flex justify-between items-center mb-6'>
         <h2 className='text-xl font-bold text-gray-900 dark:text-gray-100'>
           Manage Links

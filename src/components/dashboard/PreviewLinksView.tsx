@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { Link as LinkType, UserProfile } from '@/types';
+import Image from 'next/image';
 
 interface PreviewLinksViewProps {
   links: LinkType[];
@@ -25,7 +26,7 @@ export function PreviewLinksView({
 
   if (!profile) {
     return (
-      <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 text-center'>
+      <div className='bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center'>
         <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2'>
           Profile Not Found
         </h2>
@@ -42,7 +43,7 @@ export function PreviewLinksView({
   const previewUrl = `/${profile.customUrl}`;
 
   return (
-    <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden'>
+    <div className='bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden'>
       <div className='flex justify-between items-center p-4 border-b dark:border-gray-700'>
         <h2 className='text-xl font-bold text-gray-900 dark:text-gray-100'>
           Preview
@@ -59,10 +60,12 @@ export function PreviewLinksView({
         <div className='flex flex-col items-center'>
           <div className='w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full mb-4 flex items-center justify-center text-gray-500 dark:text-gray-400'>
             {profile.avatarUrl ? (
-              <img
+              <Image
                 src={profile.avatarUrl}
                 alt={profile.title}
                 className='w-full h-full rounded-full object-cover'
+                width={80}
+                height={80}
               />
             ) : (
               <span className='text-2xl font-bold'>
@@ -85,7 +88,7 @@ export function PreviewLinksView({
         {links.length === 0 ? (
           <div className='text-center py-8'>
             <p className='text-gray-500 dark:text-gray-400 mb-4'>
-              You haven't added any links yet.
+              You haven&apos;t added any links yet.
             </p>
           </div>
         ) : (

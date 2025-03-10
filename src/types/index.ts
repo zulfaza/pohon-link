@@ -3,8 +3,8 @@ export interface Link {
   title: string;
   url: string;
   order: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UserProfile {
@@ -15,6 +15,6 @@ export interface UserProfile {
   bio?: string | null;
   avatarUrl?: string;
   theme: 'light' | 'dark' | 'system';
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }

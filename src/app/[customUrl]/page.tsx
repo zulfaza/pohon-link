@@ -1,7 +1,35 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { getUserProfileByCustomUrl, getLinksByUserId } from '@/lib/firestore';
+import { getUserProfileByCustomUrl, getLinksByUserId } from '@/lib/actions';
 import { Metadata } from 'next';
+import { Link, UserProfile } from '@/types';
+import Image from 'next/image';
+
+// Helper function to parse dates from ISO strings
+const parseDates = (obj: unknown): unknown => {
+  if (!obj) return obj;
+
+  if (
+    typeof obj === 'string' &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(obj)
+  ) {
+    return new Date(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => parseDates(item));
+  }
+
+  if (typeof obj === 'object' && obj !== null) {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = parseDates(value);
+    }
+    return result;
+  }
+
+  return obj;
+};
 
 interface LinkPageProps {
   params: {
@@ -12,7 +40,7 @@ interface LinkPageProps {
 export async function generateMetadata({
   params,
 }: LinkPageProps): Promise<Metadata> {
-  const { customUrl } = params;
+  const { customUrl } = await params;
   const profile = await getUserProfileByCustomUrl(customUrl);
 
   if (!profile) {
@@ -37,7 +65,11 @@ export default async function LinkPage({ params }: LinkPageProps) {
 
   const links = await getLinksByUserId(profile.userId);
 
-  const isDarkMode = profile.theme === 'dark';
+  // Parse dates from ISO strings
+  const parsedProfile = parseDates(profile) as UserProfile;
+  const parsedLinks = parseDates(links) as Link[];
+
+  const isDarkMode = parsedProfile.theme === 'dark';
 
   return (
     <div
@@ -54,39 +86,43 @@ export default async function LinkPage({ params }: LinkPageProps) {
               isDarkMode ? 'text-gray-300' : 'text-gray-500'
             }`}
           >
-            {profile.avatarUrl ? (
-              <img
-                src={profile.avatarUrl}
-                alt={profile.title}
+            {parsedProfile.avatarUrl ? (
+              <Image
+                width={80}
+                height={80}
+                src={parsedProfile.avatarUrl}
+                alt={parsedProfile.title}
                 className='w-full h-full rounded-full object-cover'
               />
             ) : (
               <span className='text-3xl font-bold'>
-                {profile.title.charAt(0)}
+                {parsedProfile.title.charAt(0)}
               </span>
             )}
           </div>
-          <h1 className='text-2xl font-bold text-center'>{profile.title}</h1>
-          {profile.bio && (
+          <h1 className='text-2xl font-bold text-center'>
+            {parsedProfile.title}
+          </h1>
+          {parsedProfile.bio && (
             <p
               className={`text-center mt-2 ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-600'
               }`}
             >
-              {profile.bio}
+              {parsedProfile.bio}
             </p>
           )}
         </div>
 
         <div className='space-y-3'>
-          {links.length === 0 ? (
+          {parsedLinks.length === 0 ? (
             <div className='text-center py-8'>
               <p className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
                 No links available.
               </p>
             </div>
           ) : (
-            links.map((link) => (
+            parsedLinks.map((link: Link) => (
               <a
                 key={link.id}
                 href={link.url}

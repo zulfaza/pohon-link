@@ -42,6 +42,7 @@ export const LinkForm: React.FC<LinkFormProps> = ({
         // Check if URL is valid by creating a URL object
         new URL(url.startsWith('http') ? url : `https://${url}`);
       } catch (e) {
+        console.error(e);
         newErrors.url = 'Please enter a valid URL';
         isValid = false;
       }

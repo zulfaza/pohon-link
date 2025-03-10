@@ -23,12 +23,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [theme, setTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
-
   // Set up theme when component mounts
   useEffect(() => {
-    setMounted(true);
-
     // Function to update the DOM based on theme
     const updateTheme = (newTheme: Theme) => {
       setTheme(newTheme);

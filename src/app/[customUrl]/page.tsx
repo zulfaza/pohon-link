@@ -32,9 +32,9 @@ const parseDates = (obj: unknown): unknown => {
 };
 
 interface LinkPageProps {
-  params: {
+  params: Promise<{
     customUrl: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({

@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Since we're using Clerk, not Firebase Auth, we need to rely on the userId field
+    // in the documents rather than request.auth
+    
+    // Profiles collection
+    match /profiles/{profileId} {
+      // Allow read access to anyone for public profiles
+      allow read: if true;
+      
+      // Allow anyone to create a profile (we'll validate userId in the app)
+      allow create: if true;
+      
+      // For updates and deletes, we can't use request.auth, so we'll allow all
+      // and handle authorization in the application code
+      allow update, delete: if true;
+    }
+    
+    // Links collection
+    match /links/{linkId} {
+      // Allow read access to anyone for public links
+      allow read: if true;
+      
+      // Allow anyone to create, update, delete links (we'll validate in the app)
+      allow write: if true;
+    }
+  }
+} 
